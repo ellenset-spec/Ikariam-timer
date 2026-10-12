@@ -3,238 +3,331 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ikariam War Timer</title>
- 
+<title>Ikariam Operations Board</title>
+
 <style>
+
 body{
-background:#111827;
-color:white;
-font-family:Arial,sans-serif;
-margin:0;
-padding:20px;
+    margin:0;
+    background:#0f172a;
+    color:white;
+    font-family:Arial, sans-serif;
 }
- 
+
 .container{
-max-width:900px;
-margin:auto;
+    max-width:1200px;
+    margin:auto;
+    padding:20px;
 }
- 
+
 h1{
-text-align:center;
-margin-bottom:25px;
+    text-align:center;
+    margin-bottom:25px;
 }
- 
-.form{
-display:flex;
-flex-wrap:wrap;
-gap:10px;
-margin-bottom:20px;
+
+.top-buttons{
+    text-align:center;
+    margin-bottom:20px;
 }
- 
-input{
-padding:10px;
-border:none;
-border-radius:8px;
-font-size:16px;
-}
- 
+
 button{
-padding:10px 15px;
-border:none;
-border-radius:8px;
-cursor:pointer;
-font-weight:bold;
+    cursor:pointer;
+    border:none;
+    border-radius:8px;
+    padding:8px 14px;
+    font-weight:bold;
 }
- 
-.add-btn{
-background:#2563eb;
-color:white;
+
+.add{
+    background:#2563eb;
+    color:white;
 }
- 
-.timer{
-background:#1f2937;
-padding:15px;
-border-radius:12px;
-margin-bottom:12px;
-display:flex;
-justify-content:space-between;
-align-items:center;
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:15px;
 }
- 
-.timer-info{
-display:flex;
-flex-direction:column;
+
+.card{
+    background:#1e293b;
+    border-radius:15px;
+    padding:20px;
 }
- 
-.timer-name{
-font-size:20px;
-font-weight:bold;
+
+.name{
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:15px;
 }
- 
-.timer-time{
-font-size:28px;
+
+.time{
+    text-align:center;
+    font-size:42px;
+    margin-bottom:15px;
+    font-weight:bold;
 }
- 
-.warning{
-background:#7c5300;
+
+.controls{
+    display:flex;
+    gap:8px;
+    margin-bottom:10px;
 }
- 
-.danger{
-background:#991b1b;
+
+.controls input{
+    width:90px;
+    padding:8px;
+    border:none;
+    border-radius:8px;
 }
- 
-.flash{
-animation:flash 1s infinite;
+
+.start{
+    background:#16a34a;
+    color:white;
 }
- 
-@keyframes flash{
-50%{
-opacity:0.4;
+
+.reset{
+    background:#dc2626;
+    color:white;
 }
-}
- 
-.actions button{
-margin-left:5px;
-}
- 
+
 .rename{
-background:#f59e0b;
-color:black;
+    background:#f59e0b;
 }
- 
-.delete{
-background:#dc2626;
-color:white;
+
+.warning{
+    background:#78350f;
 }
+
+.danger{
+    background:#991b1b;
+}
+
+.flash{
+    animation:flash 1s infinite;
+}
+
+@keyframes flash{
+    50%{
+        opacity:0.5;
+    }
+}
+
+.small{
+    text-align:center;
+    color:#cbd5e1;
+}
+
 </style>
 </head>
- 
+
 <body>
- 
+
 <div class="container">
- 
-<h1>⚔️ Ikariam War Timer</h1>
- 
-<div class="form">
-<input id="name" placeholder="Wave Name">
-<input id="hours" type="number" min="0" value="0" placeholder="Hours">
-<input id="minutes" type="number" min="1" value="15" placeholder="Minutes">
-<button class="add-btn" onclick="addTimer()">Add Timer</button>
+
+<h1>⚔️ Ikariam Operations Board</h1>
+
+<div class="top-buttons">
+<button class="add" onclick="addClock()">+ Add Clock</button>
 </div>
- 
-<div id="timers"></div>
- 
+
+<div class="grid" id="board"></div>
+
 </div>
- 
+
 <script>
- 
-let timers = JSON.parse(localStorage.getItem("ikariamTimers")) || [];
- 
-function saveTimers(){
-localStorage.setItem("ikariamTimers", JSON.stringify(timers));
-}
- 
-function addTimer(){
- 
-const name = document.getElementById("name").value.trim();
-const hours = Number(document.getElementById("hours").value);
-const minutes = Number(document.getElementById("minutes").value);
- 
-if(!name) return;
- 
-const endTime = Date.now() + ((hours * 60 + minutes) * 60000);
- 
-timers.push({
-id: Date.now(),
-name,
-endTime
+
+let clocks =
+JSON.parse(localStorage.getItem("ikariamClocks")) || [
+    {name:"ALPHA ➜ BETA"},
+    {name:"ALPHA ➜ GAMMA"},
+    {name:"FLEET RETURN"}
+];
+
+clocks.forEach(c=>{
+    if(!c.endTime)
+        c.endTime = null;
 });
- 
-saveTimers();
-render();
+
+save();
+
+function save(){
+    localStorage.setItem(
+        "ikariamClocks",
+        JSON.stringify(clocks)
+    );
 }
- 
-function deleteTimer(id){
-timers = timers.filter(t => t.id !== id);
-saveTimers();
-render();
+
+function addClock(){
+
+    const name = prompt(
+        "Clock Name:"
+    );
+
+    if(!name) return;
+
+    clocks.push({
+        name:name,
+        endTime:null
+    });
+
+    save();
+    render();
 }
- 
-function renameTimer(id){
- 
-const timer = timers.find(t => t.id === id);
- 
-const newName = prompt("New Timer Name:", timer.name);
- 
-if(!newName) return;
- 
-timer.name = newName;
- 
-saveTimers();
-render();
+
+function renameClock(index){
+
+    const newName = prompt(
+        "New Name:",
+        clocks[index].name
+    );
+
+    if(!newName) return;
+
+    clocks[index].name = newName;
+
+    save();
+    render();
 }
- 
+
+function startClock(index){
+
+    const minutes =
+    Number(
+        document.getElementById(
+            "minutes-"+index
+        ).value
+    );
+
+    if(!minutes || minutes <= 0)
+        return;
+
+    clocks[index].endTime =
+        Date.now() +
+        (minutes * 60000);
+
+    save();
+}
+
+function resetClock(index){
+
+    clocks[index].endTime = null;
+
+    save();
+    render();
+}
+
+function format(ms){
+
+    if(ms <= 0)
+        return "00:00:00";
+
+    let total =
+    Math.floor(ms/1000);
+
+    let hours =
+    Math.floor(total/3600);
+
+    let minutes =
+    Math.floor(
+        (total%3600)/60
+    );
+
+    let seconds =
+    total%60;
+
+    return
+        String(hours)
+        .padStart(2,"0")
+        + ":" +
+        String(minutes)
+        .padStart(2,"0")
+        + ":" +
+        String(seconds)
+        .padStart(2,"0");
+}
+
 function render(){
- 
-const container = document.getElementById("timers");
- 
-timers.sort((a,b)=>a.endTime-b.endTime);
- 
-container.innerHTML = "";
- 
-timers.forEach(timer=>{
- 
-const remaining = timer.endTime - Date.now();
- 
-if(remaining <= 0){
-return;
+
+    const board =
+    document.getElementById("board");
+
+    board.innerHTML = "";
+
+    clocks.forEach((clock,index)=>{
+
+        let remaining = 0;
+
+        if(clock.endTime){
+            remaining =
+            clock.endTime -
+            Date.now();
+        }
+
+        let classes = "card";
+
+        if(
+            remaining > 0 &&
+            remaining < 300000
+        ){
+            classes += " warning";
+        }
+
+        if(
+            remaining > 0 &&
+            remaining < 60000
+        ){
+            classes +=
+            " danger flash";
+        }
+
+        board.innerHTML += `
+        <div class="${classes}">
+
+            <div class="name">
+                ${clock.name}
+            </div>
+
+            <div class="time">
+                ${format(remaining)}
+            </div>
+
+            <div class="controls">
+                <input
+                    id="minutes-${index}"
+                    type="number"
+                    placeholder="Minutes">
+
+                <button
+                    class="start"
+                    onclick="startClock(${index})">
+                    Start
+                </button>
+
+                <button
+                    class="reset"
+                    onclick="resetClock(${index})">
+                    Reset
+                </button>
+            </div>
+
+            <div class="small">
+                <button class="rename"
+                onclick="renameClock(${index})">
+                Edit Name
+                </button>
+            </div>
+
+        </div>
+        `;
+    });
 }
- 
-const hours = Math.floor(remaining/3600000);
-const minutes = Math.floor((remaining%3600000)/60000);
-const seconds = Math.floor((remaining%60000)/1000);
- 
-const div = document.createElement("div");
- 
-let classes = "timer";
- 
-if(remaining < 300000){
-classes += " warning";
-}
- 
-if(remaining < 60000){
-classes += " danger flash";
-}
- 
-div.className = classes;
- 
-div.innerHTML = `
-<div class="timer-info">
-<div class="timer-name">${timer.name}</div>
-<div class="timer-time">
-${String(hours).padStart(2,"0")}:
-${String(minutes).padStart(2,"0")}:
-${String(seconds).padStart(2,"0")}
-</div>
-</div>
- 
-<div class="actions">
-<button class="rename" onclick="renameTimer(${timer.id})">Rename</button>
-<button class="delete" onclick="deleteTimer(${timer.id})">Delete</button>
-</div>
-`;
- 
-container.appendChild(div);
-});
-}
- 
-setInterval(()=>{
+
+setInterval(render,1000);
+
 render();
-},1000);
- 
-render();
- 
+
 </script>
- 
+
 </body>
 </html>
