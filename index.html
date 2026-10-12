@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ikariam War Timer</title>
+ 
+<style>
+body{
+background:#111827;
+color:white;
+font-family:Arial,sans-serif;
+margin:0;
+padding:20px;
+}
+ 
+.container{
+max-width:900px;
+margin:auto;
+}
+ 
+h1{
+text-align:center;
+margin-bottom:25px;
+}
+ 
+.form{
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+margin-bottom:20px;
+}
+ 
+input{
+padding:10px;
+border:none;
+border-radius:8px;
+font-size:16px;
+}
+ 
+button{
+padding:10px 15px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+}
+ 
+.add-btn{
+background:#2563eb;
+color:white;
+}
+ 
+.timer{
+background:#1f2937;
+padding:15px;
+border-radius:12px;
+margin-bottom:12px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+ 
+.timer-info{
+display:flex;
+flex-direction:column;
+}
+ 
+.timer-name{
+font-size:20px;
+font-weight:bold;
+}
+ 
+.timer-time{
+font-size:28px;
+}
+ 
+.warning{
+background:#7c5300;
+}
+ 
+.danger{
+background:#991b1b;
+}
+ 
+.flash{
+animation:flash 1s infinite;
+}
+ 
+@keyframes flash{
+50%{
+opacity:0.4;
+}
+}
+ 
+.actions button{
+margin-left:5px;
+}
+ 
+.rename{
+background:#f59e0b;
+color:black;
+}
+ 
+.delete{
+background:#dc2626;
+color:white;
+}
+</style>
+</head>
+ 
+<body>
+ 
+<div class="container">
+ 
+<h1>⚔️ Ikariam War Timer</h1>
+ 
+<div class="form">
+<input id="name" placeholder="Wave Name">
+<input id="hours" type="number" min="0" value="0" placeholder="Hours">
+<input id="minutes" type="number" min="1" value="15" placeholder="Minutes">
+<button class="add-btn" onclick="addTimer()">Add Timer</button>
+</div>
+ 
+<div id="timers"></div>
+ 
+</div>
+ 
+<script>
+ 
+let timers = JSON.parse(localStorage.getItem("ikariamTimers")) || [];
+ 
+function saveTimers(){
+localStorage.setItem("ikariamTimers", JSON.stringify(timers));
+}
+ 
+function addTimer(){
+ 
+const name = document.getElementById("name").value.trim();
+const hours = Number(document.getElementById("hours").value);
+const minutes = Number(document.getElementById("minutes").value);
+ 
+if(!name) return;
+ 
+const endTime = Date.now() + ((hours * 60 + minutes) * 60000);
+ 
+timers.push({
+id: Date.now(),
+name,
+endTime
+});
+ 
+saveTimers();
+render();
+}
+ 
+function deleteTimer(id){
+timers = timers.filter(t => t.id !== id);
+saveTimers();
+render();
+}
+ 
+function renameTimer(id){
+ 
+const timer = timers.find(t => t.id === id);
+ 
+const newName = prompt("New Timer Name:", timer.name);
+ 
+if(!newName) return;
+ 
+timer.name = newName;
+ 
+saveTimers();
+render();
+}
+ 
+function render(){
+ 
+const container = document.getElementById("timers");
+ 
+timers.sort((a,b)=>a.endTime-b.endTime);
+ 
+container.innerHTML = "";
+ 
+timers.forEach(timer=>{
+ 
+const remaining = timer.endTime - Date.now();
+ 
+if(remaining <= 0){
+return;
+}
+ 
+const hours = Math.floor(remaining/3600000);
+const minutes = Math.floor((remaining%3600000)/60000);
+const seconds = Math.floor((remaining%60000)/1000);
+ 
+const div = document.createElement("div");
+ 
+let classes = "timer";
+ 
+if(remaining < 300000){
+classes += " warning";
+}
+ 
+if(remaining < 60000){
+classes += " danger flash";
+}
+ 
+div.className = classes;
+ 
+div.innerHTML = `
+<div class="timer-info">
+<div class="timer-name">${timer.name}</div>
+<div class="timer-time">
+${String(hours).padStart(2,"0")}:
+${String(minutes).padStart(2,"0")}:
+${String(seconds).padStart(2,"0")}
+</div>
+</div>
+ 
+<div class="actions">
+<button class="rename" onclick="renameTimer(${timer.id})">Rename</button>
+<button class="delete" onclick="deleteTimer(${timer.id})">Delete</button>
+</div>
+`;
+ 
+container.appendChild(div);
+});
+}
+ 
+setInterval(()=>{
+render();
+},1000);
+ 
+render();
+ 
+</script>
+ 
+</body>
+</html>
